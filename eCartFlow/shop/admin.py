@@ -1,3 +1,6 @@
 from django.contrib import admin
+from .models import ElectronicDevices, FashionProducts, FurnitureProduct
 
-# Register your models here.
+admin.site.register(ElectronicDevices)
+admin.site.register(FashionProducts)
+admin.site.register(FurnitureProduct)
