@@ -1,18 +1,21 @@
 from rest_framework import serializers
 from shop.models import ElectronicDevices, FashionProducts, FurnitureProduct
 
-
-class ElectronicDeviceSerializer(serializers.ModelSerializer):
+class ProductBaseSerializer(serializers.ModelSerializer):
     class Meta:
+        fields = ['name', 'price', 'brand', 'color', 'description', 'created_at', 'updated_at']
+
+class ElectronicDeviceSerializer(ProductBaseSerializer):
+    class Meta(ProductBaseSerializer.Meta):
         model = ElectronicDevices
-        fields = '__all__'
+        fields = ProductBaseSerializer.Meta.fields + ['model', 'storage_capacity']
 
-class FashionProductSerializer(serializers.ModelSerializer):
-    class Meta:
+class FashionProductSerializer(ProductBaseSerializer):
+    class Meta(ProductBaseSerializer.Meta):
         model = FashionProducts
-        fields = '__all__'
+        fields = ProductBaseSerializer.Meta.fields + ['size', 'material']
 
-class FurnitureProductSerializer(serializers.ModelSerializer):
-    class Meta:
+class FurnitureProductSerializer(ProductBaseSerializer):
+    class Meta(ProductBaseSerializer.Meta):
         model = FurnitureProduct
-        fields = '__all__'
+        fields = ProductBaseSerializer.Meta.fields + ['material', 'dimensions']
