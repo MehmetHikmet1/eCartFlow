@@ -1,8 +1,9 @@
 from django.shortcuts import render
-from rest_framework import viewsets, APIView, Response
-from .serializers import ElectronicDeviceSerializer, FashionProductSerializer, FurnitureProductSerializer
-from shop.models import ElectronicDevices, FashionProducts, FurnitureProduct
-from django.db.models import Q
+from rest_framework import viewsets, APIView, Response, status
+from .serializers import ElectronicDeviceSerializer, FashionProductSerializer, FurnitureProductSerializer, CartSerializer, CartItemSerializer
+from shop.models import ElectronicDevices, FashionProducts, FurnitureProduct, Cart, CartItem
+from django.db.models import Q, F
+from django.db import transaction
 
 class ElectronicDeviceViewSet(viewsets.ModelViewSet):
     queryset = ElectronicDevices.objects.all()
@@ -77,3 +78,34 @@ class ProductFilterView(APIView):
             return Response({"error": "Invalid product type"}, status=400)
 
         return Response(serializer.data)
+    
+class CartView(APIView):
+    def get(self, request):
+        cart, created = Cart.objects.get_or_create(user=request.user)
+        serializer = CartSerializer(cart)
+        return Response(serializer.data)
+
+    @transaction.atomic
+    def post(self, request):
+        cart, created = Cart.objects.get_or_create(user=request.user)
+        serializer = CartItemSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            product_type = serializer.validated_data['product_type']
+            product_id = serializer.validated_data['product_id']
+            quantity = serializer.validated_data['quantity']
+
+            cart_item, item_created = CartItem.objects.select_for_update().get_or_create(
+                cart=cart,
+                product_type=product_type,
+                product_id=product_id,
+                defaults={'quantity': quantity}
+            )
+
+            if not item_created:
+                cart_item.quantity = F('quantity') + quantity
+                cart_item.save()
+
+            return Response(CartSerializer(cart).data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
