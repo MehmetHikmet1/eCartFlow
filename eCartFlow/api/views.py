@@ -1,5 +1,7 @@
 from django.shortcuts import render
-from rest_framework import viewsets, APIView, Response, status
+from rest_framework import viewsets, status
+from rest_framework.views import APIView
+from rest_framework.response import Response
 from .serializers import ElectronicDeviceSerializer, FashionProductSerializer, FurnitureProductSerializer, CartSerializer, CartItemSerializer
 from shop.models import ElectronicDevices, FashionProducts, FurnitureProduct, Cart, CartItem
 from django.db.models import Q, F
