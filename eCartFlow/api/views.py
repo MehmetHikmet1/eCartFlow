@@ -1,11 +1,19 @@
 from django.shortcuts import render
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, generics
+from django.contrib.auth.models import User
+from rest_framework.permissions import AllowAny
+from .serializers import UserSerializer, UserLoginSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from django.template.response import TemplateResponse
 from .serializers import ElectronicDeviceSerializer, FashionProductSerializer, FurnitureProductSerializer, CartSerializer, CartItemSerializer
 from shop.models import ElectronicDevices, FashionProducts, FurnitureProduct, Cart, CartItem
 from django.db.models import Q, F
 from django.db import transaction
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
+from django.views.generic import TemplateView
+from django.contrib.auth import login
 
 class ElectronicDeviceViewSet(viewsets.ModelViewSet):
     queryset = ElectronicDevices.objects.all()
@@ -111,3 +119,38 @@ class CartView(APIView):
             return Response(CartSerializer(cart).data, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+@method_decorator(login_required(login_url='login'), name='dispatch')
+class IndexView(TemplateView):
+    template_name = 'api/index.html'
+
+    def get(self, request, *args, **kwargs):
+        
+        return super().get(request, *args, **kwargs)
+
+class UserRegisterView(generics.CreateAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        return render(request,'api/login.html')
+    
+    def get(self, request, *args, **kwargs):
+        return render(request, 'api/register.html')
+
+class UserLoginView(generics.GenericAPIView):
+    serializer_class = UserLoginSerializer
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.validated_data['user']
+        login(request, user)
+        return render(request, 'api/index.html')
+
+    def get(self, request, *args, **kwargs):
+        return render(request, 'api/login.html')
