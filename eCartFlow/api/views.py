@@ -14,6 +14,8 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 from django.contrib.auth import login
+from rest_framework.renderers import JSONRenderer
+from django.shortcuts import redirect
 
 class ElectronicDeviceViewSet(viewsets.ModelViewSet):
     queryset = ElectronicDevices.objects.all()
@@ -123,12 +125,13 @@ class CartView(APIView):
 @method_decorator(login_required(login_url='login'), name='dispatch')
 class IndexView(TemplateView):
     template_name = 'api/index.html'
-
     def get(self, request, *args, **kwargs):
         
         return super().get(request, *args, **kwargs)
 
 class UserRegisterView(generics.CreateAPIView):
+    template_name = 'api/register.html'
+    renderer_classes = [JSONRenderer]
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
 
@@ -136,12 +139,14 @@ class UserRegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        return render(request,'api/login.html')
+        return redirect('login')
     
     def get(self, request, *args, **kwargs):
         return render(request, 'api/register.html')
 
 class UserLoginView(generics.GenericAPIView):
+    template_name = 'api/login.html'
+    renderer_classes = [JSONRenderer]
     serializer_class = UserLoginSerializer
     permission_classes = [AllowAny]
 
@@ -150,7 +155,7 @@ class UserLoginView(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data['user']
         login(request, user)
-        return render(request, 'api/index.html')
+        return redirect('index')
 
     def get(self, request, *args, **kwargs):
         return render(request, 'api/login.html')
