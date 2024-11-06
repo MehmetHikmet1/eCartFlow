@@ -1,7 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from django.contrib.auth.views import LogoutView
-from .views import CartView, ElectronicDeviceViewSet, FashionProductViewSet, FurnitureProductViewSet, ProductFilterView, UserRegisterView, UserLoginView, IndexView
+from .views import CartView, CustomLogoutView, ElectronicDeviceViewSet, FashionProductViewSet, FurnitureProductViewSet, ProductFilterView, UserRegisterView, UserLoginView, IndexView
 
 router = DefaultRouter()
 router.register(r'electronic-devices', ElectronicDeviceViewSet)
@@ -15,5 +14,5 @@ urlpatterns = [
     path('products/filter/', ProductFilterView.as_view(), name='product-filter'),
     path('register/', UserRegisterView.as_view(), name='register'),
     path('login/', UserLoginView.as_view(), name='login'),
-    path('logout/', LogoutView.as_view(next_page='login'), name='logout'),
+    path('logout/', CustomLogoutView.as_view(), name='logout'),
 ]

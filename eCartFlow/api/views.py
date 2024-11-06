@@ -1,11 +1,9 @@
 from django.shortcuts import render
 from rest_framework import viewsets, status, generics
-from django.contrib.auth.models import User
 from rest_framework.permissions import AllowAny
 from .serializers import UserSerializer, UserLoginSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.template.response import TemplateResponse
 from .serializers import ElectronicDeviceSerializer, FashionProductSerializer, FurnitureProductSerializer, CartSerializer, CartItemSerializer
 from shop.models import ElectronicDevices, FashionProducts, FurnitureProduct, Cart, CartItem
 from django.db.models import Q, F
@@ -16,6 +14,7 @@ from django.views.generic import TemplateView
 from django.contrib.auth import login
 from rest_framework.renderers import JSONRenderer
 from django.shortcuts import redirect
+from django.contrib.auth import logout
 
 class ElectronicDeviceViewSet(viewsets.ModelViewSet):
     queryset = ElectronicDevices.objects.all()
@@ -159,3 +158,8 @@ class UserLoginView(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         return render(request, 'api/login.html')
+    
+class CustomLogoutView(generics.GenericAPIView):
+    def get(self, request):
+        logout(request)
+        return redirect('login')
