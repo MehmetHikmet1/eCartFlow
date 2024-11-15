@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from shop.models import ElectronicDevices, FashionProducts, FurnitureProduct, Cart, CartItem
+import re
 
 class ProductBaseSerializer(serializers.ModelSerializer):
     class Meta:
@@ -37,15 +38,43 @@ class CartSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'items']
 
 class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+    confirm_password = serializers.CharField(write_only=True)
+    email = serializers.EmailField()
     class Meta:
         model = User
-        fields = ('username', 'password', 'email')
-        extra_kwargs = {'password': {'write_only': True}}
+        fields = ('username', 'email', 'password', 'confirm_password')
+        extra_kwargs = {
+            'password': {'write_only': True},
+            'confirm_password': {'write_only': True}
+        }
 
+    def validate_confirm_password(self, value):
+        password = self.initial_data.get('password')
+        if value != password:
+            raise serializers.ValidationError("Şifreler uyuşmuyor.")
+        return value
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Bu email adresi zaten kullanılıyor.")
+        return value
+
+    def validate_password(self, value):
+        if not re.search(r'[A-Z]', value):
+            raise serializers.ValidationError("Şifre en az bir büyük harf içermelidir.")
+        if not re.search(r'[a-z]', value):
+            raise serializers.ValidationError("Şifre en az bir küçük harf içermelidir.")
+        if not re.search(r'[0-9]', value):
+            raise serializers.ValidationError("Şifre en az bir rakam içermelidir.")
+        return value
     def create(self, validated_data):
-        user = User(**validated_data)
-        user.set_password(validated_data['password'])
-        user.save()
+        validated_data.pop('confirm_password')
+        user = User.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data['email'],
+            password=validated_data['password']
+        )
         return user
     
 class UserLoginSerializer(serializers.Serializer):

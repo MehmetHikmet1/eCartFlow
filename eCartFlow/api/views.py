@@ -130,18 +130,18 @@ class IndexView(TemplateView):
 
 class UserRegisterView(generics.CreateAPIView):
     template_name = 'api/register.html'
-    renderer_classes = [JSONRenderer]
     serializer_class = UserSerializer
     permission_classes = [AllowAny]
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        return redirect('login')
-    
     def get(self, request, *args, **kwargs):
         return render(request, 'api/register.html')
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return redirect('login')
+        return render(request, 'api/register.html', {'form': serializer})
 
 class UserLoginView(generics.GenericAPIView):
     template_name = 'api/login.html'
